@@ -1,0 +1,18 @@
+package com.example.spring.xades;
+
+import javax.xml.crypto.*;
+import java.io.InputStream;
+
+public class NoUriDereferencer implements URIDereferencer {
+
+    private final InputStream refInputStream;
+
+    public NoUriDereferencer(InputStream refInputStream) {
+        this.refInputStream = refInputStream;
+    }
+
+    @Override
+    public Data dereference(URIReference uriRef, XMLCryptoContext context) throws URIReferenceException {
+        return new OctetStreamData(refInputStream);
+    }
+}
