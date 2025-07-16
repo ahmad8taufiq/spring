@@ -111,9 +111,10 @@ public class XadesBesSigner {
         QPElement.appendChild(SPElement);
         Element SSPElement = doc.createElementNS(xadesNS, "xades:SignedSignatureProperties"); 
         SPElement.appendChild(SSPElement);
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
         df.setTimeZone(TimeZone.getTimeZone("Asia/Singapore"));
         String signingTime = df.format(new Date());
+        signingTime = signingTime.replaceAll("[+-]\\d{2}:\\d{2}$", "");
         Element STElement = doc.createElementNS(xadesNS, "xades:SigningTime"); 
         STElement.appendChild(doc.createTextNode(signingTime)); 
         SSPElement.appendChild(STElement);
