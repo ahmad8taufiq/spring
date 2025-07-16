@@ -61,6 +61,7 @@ public class UserController {
             // 3. Generate signed XML
             Document signedDoc = XadesBesSigner.sign(doc, certificate, privateKey, false);
 
+            
             cleanSignatureValuesInDOM(signedDoc);
             
             // 4. Convert signedDoc to string
@@ -69,8 +70,9 @@ public class UserController {
             // transformer.transform(new DOMSource(signedDoc), new StreamResult(out));
             // String signedXmlString = out.toString("UTF-8");
             String signedXmlString = documentToStringSafe(signedDoc);
+            String escapedSignedXmlString = minifyAndEscapeXml(signedXmlString);
 
-            System.out.println(signedXmlString);
+            System.out.println(escapedSignedXmlString);
 
             response.put("status", false);
             response.put("message", "Success");
@@ -198,5 +200,14 @@ public class UserController {
             String cleanContent = content.replaceAll("\\s+", "");
             sigValue.setTextContent(cleanContent);
         }
+    }
+
+    public String minifyAndEscapeXml(String xmlString) {
+        return xmlString.replaceAll(">\\s+<", "><")  // Remove whitespace between tags
+                        .replaceAll("\\s+", " ")       // Replace multiple spaces with single space
+                        .replaceAll(">\\s+", ">")      // Remove spaces after >
+                        .replaceAll("\\s+<", "<")      // Remove spaces before 
+                        .trim()                        // Remove leading/trailing whitespace
+                        .replace("\"", "\\\"");        // Escape quotes
     }
 }
