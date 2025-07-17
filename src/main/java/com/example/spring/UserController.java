@@ -1,8 +1,10 @@
 package com.example.spring;
 
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.security.Security;
 import java.security.KeyFactory;
 
@@ -19,9 +21,15 @@ import org.bouncycastle.util.io.pem.PemReader;
 import org.springframework.web.bind.annotation.*;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.security.cert.CertificateFactory;
 
+import com.example.spring.common.XMLSignatureVerifier;
+import com.example.spring.common.XMLSignatureVerifier.SignatureInfo;
+import com.example.spring.dto.PaymentRequestDTO;
+import com.example.spring.service.PaymentApiService;
 import com.example.spring.xades.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -30,8 +38,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-
-// final String xadesNS = "http://uri.etsi.org/01903/v1.3.2#";
 
 @RestController
 @RequestMapping("/api")
@@ -54,28 +60,41 @@ public class UserController {
             // printDocument(doc);
 
             // 2. Load key and certificate
-            PrivateKey privateKey = loadPrivateKey(); // implement sendiri
+            PrivateKey privateKey = loadPrivateKey();
+            PublicKey publicKey = loadPublicKey();
             
-            X509Certificate certificate = loadCertificate(); // implement sendiri
+            X509Certificate certificate = loadCertificate();
             
             // 3. Generate signed XML
             Document signedDoc = XadesBesSigner.sign(doc, certificate, privateKey, false);
 
-            
             cleanSignatureValuesInDOM(signedDoc);
             
             // 4. Convert signedDoc to string
-            // ByteArrayOutputStream out = new ByteArrayOutputStream();
-            // Transformer transformer = TransformerFactory.newInstance().newTransformer();
-            // transformer.transform(new DOMSource(signedDoc), new StreamResult(out));
-            // String signedXmlString = out.toString("UTF-8");
             String signedXmlString = documentToStringSafe(signedDoc);
-            String escapedSignedXmlString = minifyAndEscapeXml(signedXmlString);
+            String minifiedXmlString = minifyXml(signedXmlString);
 
-            System.out.println(escapedSignedXmlString);
+            System.out.println(minifiedXmlString);
 
-            response.put("status", false);
-            response.put("message", "Success");
+            XMLSignatureVerifier.setVerificationPublicKey(publicKey);
+            SignatureInfo signatureInfo = XMLSignatureVerifier.verify(minifiedXmlString, true);
+
+            if(signatureInfo.isCoreValid()) {
+                PaymentRequestDTO request = new PaymentRequestDTO();
+                request.setTraceReference(UUID.randomUUID().toString());
+                request.setService("N");
+                request.setType("pacs.008.001.08");
+                request.setSender("KIRUBNBBFNRT");
+                request.setReceiver("NDPXBNBAXIPS");
+                request.setDocument(minifiedXmlString);
+    
+                PaymentApiService paymentApiService = new PaymentApiService();
+                String resp = paymentApiService.sendPaymentRequest(request);
+                System.out.println(resp);
+            }
+
+            response.put("status", true);
+            response.put("message", signatureInfo.isCoreValid());
         } catch (Exception e) {
             response.put("status", false);
             response.put("message", e.getMessage());
@@ -126,6 +145,32 @@ public class UserController {
         }
     }
 
+    public PublicKey loadPublicKey() {
+        try {
+            // Tambahkan BouncyCastle sebagai Security Provider (opsional, tergantung jenis key)
+            Security.addProvider(new BouncyCastleProvider());
+
+            // Ambil file public key dari resources
+            InputStream is = getClass().getClassLoader().getResourceAsStream("public_key_ku_tarus.pem");
+            if (is == null) {
+                throw new RuntimeException("public-key.pem not found in classpath");
+            }
+
+            PemReader pemReader = new PemReader(new InputStreamReader(is));
+            PemObject pemObject = pemReader.readPemObject();
+            byte[] keyBytes = pemObject.getContent();
+            pemReader.close();
+
+            // Buat PublicKey dari X509EncodedKeySpec
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+            KeyFactory kf = KeyFactory.getInstance("RSA"); // Ganti ke "EC" jika pakai elliptic curve
+            return kf.generatePublic(keySpec);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load public key", e);
+        }
+    }
+
     private X509Certificate loadCertificate() {
         try {
             // Ambil file .pem dari classpath
@@ -141,32 +186,6 @@ public class UserController {
             throw new RuntimeException("Failed to load X.509 certificate", e);
         }
     }
-
-    // private String documentToStringClean(Document doc) throws Exception {
-    //     TransformerFactory tf = TransformerFactory.newInstance();
-    //     Transformer transformer = tf.newTransformer();
-        
-    //     // Configure transformer for clean output
-    //     transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes"); // Changed to "yes"
-    //     transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-    //     transformer.setOutputProperty(OutputKeys.INDENT, "no");
-    //     transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        
-    //     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    //     transformer.transform(new DOMSource(doc), new StreamResult(out));
-        
-    //     String result = out.toString("UTF-8");
-        
-    //     // Clean up XML entities that cause issues
-    //     result = result.replaceAll("&#13;", "");     // Carriage return
-    //     result = result.replaceAll("&#10;", "");     // Line feed  
-    //     result = result.replaceAll("&#9;", "");      // Tab
-        
-    //     // If you need the XML declaration, add it manually at the beginning
-    //     result = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + result;
-        
-    //     return result;
-    // }
 
     private String documentToStringSafe(Document doc) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -202,12 +221,11 @@ public class UserController {
         }
     }
 
-    public String minifyAndEscapeXml(String xmlString) {
+    public String minifyXml(String xmlString) {
         return xmlString.replaceAll(">\\s+<", "><")  // Remove whitespace between tags
                         .replaceAll("\\s+", " ")       // Replace multiple spaces with single space
                         .replaceAll(">\\s+", ">")      // Remove spaces after >
-                        .replaceAll("\\s+<", "<")      // Remove spaces before 
-                        .trim()                        // Remove leading/trailing whitespace
-                        .replace("\"", "\\\"");        // Escape quotes
+                        .replaceAll("\\s+<", "<")      // Remove spaces before <
+                        .trim();                       // Remove leading/trailing whitespace
     }
 }

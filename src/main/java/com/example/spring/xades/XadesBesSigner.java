@@ -1,6 +1,7 @@
 package com.example.spring.xades;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.PrivateKey;
@@ -78,7 +79,7 @@ public class XadesBesSigner {
         CanonicalizationMethod.EXCLUSIVE, (XMLStructure) null)), "http://uri.etsi.org/01903/v1.3.2#SignedProperties", null);
         refs.add(ref2);
 
-        Reference ref3 = fac.newReference("", fac.newDigestMethod(DigestMethod.SHA256, null), Collections.singletonList(fac.newCanonicalizationMethod(CanonicalizationMethod.EXCLUSIVE, (XMLStructure) null)), null, null);
+        Reference ref3 = fac.newReference(null, fac.newDigestMethod(DigestMethod.SHA256, null), Collections.singletonList(fac.newCanonicalizationMethod(CanonicalizationMethod.EXCLUSIVE, (XMLStructure) null)), null, null);
         refs.add(ref3);
 
         SignedInfo si = fac.newSignedInfo(fac.newCanonicalizationMethod(CanonicalizationMethod.EXCLUSIVE, (XMLStructure) null), fac.newSignatureMethod(SignatureMethod.RSA_SHA1, null), refs);
@@ -133,22 +134,26 @@ public class XadesBesSigner {
         // Create the data for the empty URI reference
         ByteArrayOutputStream refOutputStream = new ByteArrayOutputStream();
         Transformer xform = TransformerFactory.newInstance().newTransformer();
-        xform.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes"); // Always omit for fragments
-        xform.setOutputProperty(OutputKeys.METHOD, "xml");
-        xform.setOutputProperty(OutputKeys.INDENT, "no");
+        xform.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+
+        xform.transform(new DOMSource(docNode), new StreamResult(refOutputStream));
+        InputStream refInputStream = new ByteArrayInputStream(refOutputStream.toByteArray());
+        
+        // xform.setOutputProperty(OutputKeys.METHOD, "xml");
+        // xform.setOutputProperty(OutputKeys.INDENT, "no");
         
         // Transform the Document node to get the content for empty URI reference
-        if (docNode != null) {
-            xform.transform(new DOMSource(docNode), new StreamResult(refOutputStream));
-        } else {
-            // If no Document element, use the whole document
-            xform.transform(new DOMSource(doc), new StreamResult(refOutputStream));
-        }
+        // if (docNode != null) {
+        //     xform.transform(new DOMSource(docNode), new StreamResult(refOutputStream));
+        // } else {
+        //     // If no Document element, use the whole document
+        //     xform.transform(new DOMSource(doc), new StreamResult(refOutputStream));
+        // }
         
-        byte[] refData = refOutputStream.toByteArray();
+        // byte[] refData = refOutputStream.toByteArray();
         
         // Set the custom dereferencer with the data as byte array
-        dsc.setURIDereferencer(new NoUriDereferencer(refData));
+        dsc.setURIDereferencer(new NoUriDereferencer(refInputStream));
 
         // 6. sign it!
         XMLSignature signature = fac.newXMLSignature(si, ki, objects, null, null);
