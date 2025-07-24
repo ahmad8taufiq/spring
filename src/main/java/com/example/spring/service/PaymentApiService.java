@@ -40,7 +40,7 @@ public class PaymentApiService {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(url))
             .header("Content-Type", "application/json")
-            .header("Authorization", "Bearer eyJ4NXQjUzI1NiI6IjZmN1ZvUHhCaVl5dFBNN1lmZmc2TUlEWmFaX1ZtdGRlLWZGQlhfWGJiM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJLSVJVQk5CQkZOUlQiLCJhc3J2X3R5cGUiOiJhY2Nlc3MiLCJleHAiOjQ4NzQ3MzA5NjUsImlhdCI6MTc1MjY2Njk2NSwianRpIjoidjhhb3hUdWNTV3FNdmNIckJwaDJhZyJ9.d6R1yHizkN47rjIEw49GsrUsx03-iJWxsxbZVoF59e5LebjzsqU9CG_vRRi0imkYw9p6uVAAgd2WSL4tMbMST4ImuTD23nynx6w3u2vqRJoPBSWH3OrEt1kba92TZB_qYZFZWsO-d2Tlmm0_P3rx61qJ4lz9YMOlwJ-Q-Sq1Sn6qkLusbwl6qNBibimT83f81x0O7_BoTUVVPP2msuAT9AjE_gT2EdqUdMDua0B9m4TY_yxPDYtMYmHAo89tNCcpWi26gLDGikO_LkBZUr-Ku0OctFlNLodSCkbnMGMJGeEYLRqBORDuM9luGoOaPZafxBW0UMv6Gkm4h4IzOnX-Xg")
+            .header("Authorization", "Bearer eyJ4NXQjUzI1NiI6IjZmN1ZvUHhCaVl5dFBNN1lmZmc2TUlEWmFaX1ZtdGRlLWZGQlhfWGJiM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJLSVJVQk5CQkZOUlQiLCJhc3J2X3R5cGUiOiJhY2Nlc3MiLCJleHAiOjQ4NzUwNjI2MjIsImlhdCI6MTc1Mjk5ODYyMiwianRpIjoiM1BUOUEtYlFUZUdyY291aFN1aUM5USJ9.dt46wB64RasoSzPV9tDLRxAZ1_4DlWoc31fL2FuqbCuzA_oOv5CcS_NnOIx2rEjFg20JaNov7T33X6qtbFhJVDLSNw46njZsZ76u6DE2HX6RDem4XOKrSNZyqU6UNHnDvbyIcIw8AYdFSN5i3V47FYCniC_Atue-FCV2OICi-7rMB9GBivJl6vyMnohSrgSPDUptoSSkMQJfK911ExQCdzbDG0JYDcerXi4AtGO-zYFgcjzAWC-jSwRdLQmLRS2atjAz803Q2ZYzBJM5TxNIVHYoAollrRV_myRbDhHS8qW8w4irgQzmQ5LVrzWWus7Lf0yaKqijtypdHRRYXA8JGQ")
             .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
             .timeout(Duration.ofSeconds(30))
             .build();

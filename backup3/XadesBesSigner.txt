@@ -112,15 +112,7 @@ public class XadesBesSigner {
         Element SPElement = doc.createElementNS(xadesNS, "xades:SignedProperties"); 
         SPElement.setAttributeNS(null, "Id", signedpropsId); 
         dsc.setIdAttributeNS(SPElement, null, "Id"); 
-        SPElement.setIdAttributeNS(null, "Id", true);
-
-        Element check = doc.getElementById(signedpropsId);
-        if (check == null) {
-            throw new Exception("❌ SignedProperties element with ID '" + signedpropsId + "' was NOT registered!");
-        } else {
-            System.out.println("✅ Found SignedProperties element for ID: " + signedpropsId);
-        }
-
+        SPElement.setIdAttributeNS(null, "Id", true); 
         QPElement.appendChild(SPElement);
         Element SSPElement = doc.createElementNS(xadesNS, "xades:SignedSignatureProperties"); 
         SPElement.appendChild(SSPElement);
@@ -153,6 +145,19 @@ public class XadesBesSigner {
 
         xform.transform(new DOMSource(docNode), new StreamResult(refOutputStream));
         InputStream refInputStream = new ByteArrayInputStream(refOutputStream.toByteArray());
+        
+        // xform.setOutputProperty(OutputKeys.METHOD, "xml");
+        // xform.setOutputProperty(OutputKeys.INDENT, "no");
+        
+        // Transform the Document node to get the content for empty URI reference
+        // if (docNode != null) {
+        //     xform.transform(new DOMSource(docNode), new StreamResult(refOutputStream));
+        // } else {
+        //     // If no Document element, use the whole document
+        //     xform.transform(new DOMSource(doc), new StreamResult(refOutputStream));
+        // }
+        
+        // byte[] refData = refOutputStream.toByteArray();
         
         // Set the custom dereferencer with the data as byte array
         dsc.setURIDereferencer(new NoUriDereferencer(refInputStream));

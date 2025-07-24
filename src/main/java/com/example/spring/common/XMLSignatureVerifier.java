@@ -120,6 +120,7 @@ public class XMLSignatureVerifier {
         boolean coreValidity = signature.validate(valContext);
         
         SignatureInfo result = new SignatureInfo();
+        System.out.println(result);
         result.setCoreValid(coreValidity);
         result.setSignature(signature);
         
@@ -158,40 +159,6 @@ public class XMLSignatureVerifier {
         return result;
     }
     
-    /**
-     * Custom KeySelector that extracts the public key from the signature
-     */
-    // private static class CustomKeySelector extends KeySelector {
-    //     @Override
-    //     public KeySelectorResult select(KeyInfo keyInfo, Purpose purpose, 
-    //                                   AlgorithmMethod method, XMLCryptoContext context) 
-    //                                   throws KeySelectorException {
-            
-    //         if (keyInfo == null) {
-    //             throw new KeySelectorException("KeyInfo is null");
-    //         }
-            
-    //         // Look for X509Certificate in KeyInfo
-    //         for (Object content : keyInfo.getContent()) {
-    //             if (content instanceof X509Data) {
-    //                 X509Data x509Data = (X509Data) content;
-    //                 for (Object x509Content : x509Data.getContent()) {
-    //                     if (x509Content instanceof X509Certificate) {
-    //                         final X509Certificate cert = (X509Certificate) x509Content;
-    //                         return new KeySelectorResult() {
-    //                             @Override
-    //                             public Key getKey() {
-    //                                 return cert.getPublicKey();
-    //                             }
-    //                         };
-    //                     }
-    //                 }
-    //             }
-    //         }
-            
-    //         throw new KeySelectorException("No suitable key found");
-    //     }
-    // }
     private static class CustomKeySelector extends KeySelector {
         @Override
         public KeySelectorResult select(KeyInfo keyInfo, Purpose purpose,

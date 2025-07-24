@@ -74,7 +74,7 @@ public class UserController {
             String signedXmlString = documentToStringSafe(signedDoc);
             String minifiedXmlString = minifyXml(signedXmlString);
 
-            System.out.println(minifiedXmlString);
+            // System.out.println(minifiedXmlString);
 
             XMLSignatureVerifier.setVerificationPublicKey(publicKey);
             SignatureInfo signatureInfo = XMLSignatureVerifier.verify(minifiedXmlString, true);
